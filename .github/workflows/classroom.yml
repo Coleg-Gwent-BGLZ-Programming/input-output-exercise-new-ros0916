@@ -1,16 +1,39 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
 jobs:
-  smoothie-test:
-    name: Smoothie Test
-    setup: pip install pytest
-    run: pytest tests/test-main.py
-    input: ""
-    expected-output: ""
-    comparison-method: exact
-    timeout: 10
-    points: 10
-
-protected-paths:
-  - tests/
-  - .github/
-  - README.md
-  - classroom.yml
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Smoothie Total Calculation
+      id: smoothie-total-calculation
+      uses: classroom-resources/autograding-io-grader@v1
+      with:
+        test-name: Smoothie Total Calculation
+        setup-command: pip install pytest
+        command: "./main.py"
+        input: |
+          Chris
+          2
+          yes
+        expected-output: "\nelcome to the Smoothie Shop!\nWhat is your name? What
+          is your name? \nHow many smoothies would you like to buy? \nWould you like
+          a reusable cup for £1.00 extra? (yes/no): \nThank you, Chris! Your total
+          for 2 smoothies is £8.00.\n"
+        comparison-method: exact
+        timeout: 10
+        max-score: 10
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        SMOOTHIE-TOTAL-CALCULATION_RESULTS: "${{steps.smoothie-total-calculation.outputs.result}}"
+      with:
+        runners: smoothie-total-calculation
